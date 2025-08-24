@@ -7,6 +7,7 @@ import plotly.utils
 import json
 import requests
 import time
+import random
 
 app = Flask(__name__)
 
@@ -17,214 +18,308 @@ SYMBOL = 'BTC-USD'
 cache = {
     'btc_data': None,
     'last_update': None,
-    'market_status': 'loading'
+    'market_status': 'active'
 }
 
-# Função SUPER simplificada para buscar dados
-def fetch_btc_data():
+# Simular dados de candle (como uma corretora)
+def generate_candle_data():
     try:
-        print("Buscando dados do Bitcoin...")
-        
-        # Usando API pública mais simples (CoinGecko)
-        url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
+        # Usar API do CoinGecko para dados reais
+        url = "https://api.coingecko.com/api/v3/coins/bitcoin/ohlc"
         params = {
             'vs_currency': 'usd',
-            'days': '30',
-            'interval': 'daily'
+            'days': '1'
         }
         
         response = requests.get(url, params=params, timeout=10)
         data = response.json()
         
-        # Processar dados
-        prices = data['prices']
-        dates = [datetime.fromtimestamp(price[0]/1000) for price in prices]
-        values = [price[1] for price in prices]
+        # Processar dados OHLC (Open, High, Low, Close)
+        candles = []
+        for candle in data:
+            timestamp, open_price, high, low, close = candle
+            candles.append({
+                'timestamp': datetime.fromtimestamp(timestamp/1000),
+                'open': open_price,
+                'high': high,
+                'low': low,
+                'close': close,
+                'volume': random.uniform(1000, 5000)  # Volume simulado
+            })
         
-        # Criar DataFrame
-        df = pd.DataFrame({
-            'Date': dates,
-            'Close': values
-        })
-        df.set_index('Date', inplace=True)
+        df = pd.DataFrame(candles)
+        df.set_index('timestamp', inplace=True)
         
-        # Calcular indicadores simples
-        df['SMA_7'] = df['Close'].rolling(window=7).mean()
-        df['SMA_14'] = df['Close'].rolling(window=14).mean()
+        # Calcular indicadores
+        df['SMA_20'] = df['close'].rolling(window=20).mean()
+        df['SMA_50'] = df['close'].rolling(window=50).mean()
         
-        # Calcular RSI manualmente (simplificado)
-        delta = df['Close'].diff()
+        # Calcular RSI
+        delta = df['close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
         df['RSI'] = 100 - (100 / (1 + rs))
         
-        print("Dados carregados com sucesso!")
+        print("Dados de candle gerados com sucesso!")
         return df
         
     except Exception as e:
         print(f"Erro ao buscar dados: {e}")
-        # Dados de fallback para não quebrar o site
-        return create_fallback_data()
+        return generate_fallback_data()
 
-# Dados de fallback caso a API falhe
-def create_fallback_data():
-    dates = pd.date_range(end=datetime.now(), periods=30, freq='D')
-    prices = np.random.normal(40000, 2000, 30).cumsum()
+# Dados de fallback
+def generate_fallback_data():
+    print("Usando dados de fallback...")
+    dates = pd.date_range(end=datetime.now(), periods=100, freq='5min')
+    base_price = 40000
+    prices = []
     
-    df = pd.DataFrame({
-        'Date': dates,
-        'Close': prices
-    })
-    df.set_index('Date', inplace=True)
+    # Gerar dados de candle realistas
+    current_price = base_price
+    for i in range(len(dates)):
+        change = random.uniform(-100, 100)
+        current_price += change
+        open_price = current_price
+        high = current_price + abs(random.uniform(50, 200))
+        low = current_price - abs(random.uniform(50, 200))
+        close = current_price + random.uniform(-50, 50)
+        
+        prices.append({
+            'timestamp': dates[i],
+            'open': open_price,
+            'high': high,
+            'low': low,
+            'close': close,
+            'volume': random.uniform(1000, 5000)
+        })
     
-    df['SMA_7'] = df['Close'].rolling(window=7).mean()
-    df['SMA_14'] = df['Close'].rolling(window=14).mean()
+    df = pd.DataFrame(prices)
+    df.set_index('timestamp', inplace=True)
+    
+    # Calcular indicadores
+    df['SMA_20'] = df['close'].rolling(window=20).mean()
+    df['SMA_50'] = df['close'].rolling(window=50).mean()
     
     return df
 
-# Previsão simples
-def simple_prediction(data):
+# Gerar previsão estilosa
+def generate_prediction(data):
     if data is None or len(data) < 10:
         return None
     
-    last_price = data['Close'].iloc[-1]
-    trend = np.polyfit(range(5), data['Close'].tail(5).values, 1)[0]
+    last_close = data['close'].iloc[-1]
+    sma_20 = data['SMA_20'].iloc[-1] if not pd.isna(data['SMA_20'].iloc[-1]) else last_close
+    sma_50 = data['SMA_50'].iloc[-1] if not pd.isna(data['SMA_50'].iloc[-1]) else last_close
     
-    # Prever próximos 3 dias
-    predictions = [last_price + (i + 1) * trend for i in range(3)]
+    # Tendência baseada nas médias móveis
+    trend_strength = 0
+    if sma_20 > sma_50:
+        trend_strength = (sma_20 - sma_50) / sma_50
+    else:
+        trend_strength = (sma_50 - sma_20) / sma_20
+    
+    # Gerar previsão com base na tendência
+    predictions = []
+    current = last_close
+    
+    for i in range(10):  # Prever próximos 10 pontos
+        # Movimento baseado na tendência + algum ruído
+        movement = trend_strength * random.uniform(0.5, 1.5) * 100
+        if sma_20 < sma_50:  # Tendência de baixa
+            movement = -movement
+        
+        current = current * (1 + movement / 10000)  # Pequenas variações
+        predictions.append(current)
+    
     return predictions
 
-# Gerar sinais
-def generate_signal(data):
-    if data is None or len(data) < 14:
-        return "NEUTRO", "gray", "Dados insuficientes"
+# Gerar sinal de trading
+def generate_trading_signal(data, predictions):
+    if data is None:
+        return "NEUTRO", "gray", "Aguardando dados...", 50
     
-    current_price = data['Close'].iloc[-1]
-    sma_7 = data['SMA_7'].iloc[-1]
-    sma_14 = data['SMA_14'].iloc[-1]
-    rsi = data['RSI'].iloc[-1] if 'RSI' in data else 50
+    current_close = data['close'].iloc[-1]
+    sma_20 = data['SMA_20'].iloc[-1] if not pd.isna(data['SMA_20'].iloc[-1]) else current_close
+    sma_50 = data['SMA_50'].iloc[-1] if not pd.isna(data['SMA_50'].iloc[-1]) else current_close
+    rsi = data['RSI'].iloc[-1] if 'RSI' in data and not pd.isna(data['RSI'].iloc[-1]) else 50
     
+    # Lógica de sinal
     signals = []
+    confidence = 50  # 0-100%
     
-    if current_price > sma_7 > sma_14:
-        signals.append("Tendência de Alta")
-    elif current_price < sma_7 < sma_14:
-        signals.append("Tendência de Baixa")
-    
-    if rsi > 70:
-        signals.append("Sobrecomprado")
-    elif rsi < 30:
-        signals.append("Sobrevendido")
-    
-    if not signals:
-        signals.append("Mercado Neutro")
-    
-    # Lógica simples de sinal
-    if "Tendência de Alta" in signals and "Sobrevendido" in signals:
-        return "COMPRAR", "green", " | ".join(signals)
-    elif "Tendência de Baixa" in signals and "Sobrecomprado" in signals:
-        return "VENDER", "red", " | ".join(signals)
+    # Tendência
+    if sma_20 > sma_50:
+        signals.append("Tendência ↗️")
+        confidence += 15
     else:
-        return "NEUTRO", "gray", " | ".join(signals)
+        signals.append("Tendência ↘️")
+        confidence -= 15
+    
+    # RSI
+    if rsi > 70:
+        signals.append("Sobrecomprado ⚠️")
+        confidence -= 20
+    elif rsi < 30:
+        signals.append("Sobrevendido ⚡")
+        confidence += 20
+    
+    # Previsão
+    if predictions and len(predictions) > 0:
+        predicted_change = (predictions[0] - current_close) / current_close * 100
+        if abs(predicted_change) > 1:
+            if predicted_change > 0:
+                signals.append(f"Previsão: +{predicted_change:.1f}% 📈")
+                confidence += 10
+            else:
+                signals.append(f"Previsão: {predicted_change:.1f}% 📉")
+                confidence -= 10
+    
+    # Determinar sinal final
+    confidence = max(0, min(100, confidence))  # Limitar entre 0-100
+    
+    if confidence >= 70:
+        signal = "COMPRAR 🚀"
+        color = "green"
+    elif confidence <= 30:
+        signal = "VENDER 🔻"
+        color = "red"
+    else:
+        signal = "NEUTRO ⏸️"
+        color = "gray"
+    
+    analysis = " | ".join(signals)
+    return signal, color, analysis, confidence
 
 # Rotas
 @app.route('/')
 def index():
-    # Carregar dados se não estiverem em cache
     if cache['btc_data'] is None:
-        cache['btc_data'] = fetch_btc_data()
+        cache['btc_data'] = generate_candle_data()
         cache['last_update'] = datetime.now()
-        cache['market_status'] = 'active'
-    
     return render_template('index.html')
 
 @app.route('/api/btc-data')
 def btc_data():
-    # Se não há dados, tentar carregar
     if cache['btc_data'] is None:
-        cache['btc_data'] = fetch_btc_data()
+        cache['btc_data'] = generate_candle_data()
         cache['last_update'] = datetime.now()
-    
-    if cache['btc_data'] is None:
-        return jsonify({'status': 'loading'})
     
     try:
         data = cache['btc_data']
-        predictions = simple_prediction(data)
-        signal, signal_color, analysis = generate_signal(data)
+        predictions = generate_prediction(data)
+        signal, signal_color, analysis, confidence = generate_trading_signal(data, predictions)
         
-        # Preparar dados para gráfico
-        dates = data.index.strftime('%Y-%m-%d').tolist()
-        closes = data['Close'].round(2).tolist()
-        sma_7 = data['SMA_7'].round(2).tolist()
-        sma_14 = data['SMA_14'].round(2).tolist()
-        rsi = data['RSI'].round(2).tolist() if 'RSI' in data else [50] * len(closes)
+        # Preparar dados para gráfico de candle
+        dates = data.index.strftime('%Y-%m-%d %H:%M').tolist()
+        opens = data['open'].round(2).tolist()
+        highs = data['high'].round(2).tolist()
+        lows = data['low'].round(2).tolist()
+        closes = data['close'].round(2).tolist()
         
-        # Gráfico de preço
-        price_fig = go.Figure()
-        price_fig.add_trace(go.Scatter(x=dates, y=closes, mode='lines', name='Preço', line=dict(color='#17BECF')))
-        price_fig.add_trace(go.Scatter(x=dates, y=sma_7, mode='lines', name='SMA 7', line=dict(color='#FF7F0E', dash='dash')))
-        price_fig.add_trace(go.Scatter(x=dates, y=sma_14, mode='lines', name='SMA 14', line=dict(color='#2CA02C', dash='dash')))
+        # Gráfico de candle (como corretora)
+        candle_fig = go.Figure()
         
-        price_fig.update_layout(
-            title='Bitcoin - Preço e Médias Móveis',
-            xaxis_title='Data',
+        # Adicionar candles
+        candle_fig.add_trace(go.Candlestick(
+            x=dates,
+            open=opens,
+            high=highs,
+            low=lows,
+            close=closes,
+            name='BTC/USD',
+            increasing_line_color='#00C853',
+            decreasing_line_color='#FF1744'
+        ))
+        
+        # Adicionar médias móveis
+        if 'SMA_20' in data:
+            candle_fig.add_trace(go.Scatter(
+                x=dates, y=data['SMA_20'].round(2).tolist(),
+                name='SMA 20',
+                line=dict(color='#FF9800', width=2)
+            ))
+        
+        if 'SMA_50' in data:
+            candle_fig.add_trace(go.Scatter(
+                x=dates, y=data['SMA_50'].round(2).tolist(),
+                name='SMA 50',
+                line=dict(color='#2962FF', width=2)
+            ))
+        
+        # Adicionar previsão
+        if predictions:
+            future_dates = [(datetime.now() + timedelta(minutes=5*i)).strftime('%Y-%m-%d %H:%M') for i in range(1, 11)]
+            candle_fig.add_trace(go.Scatter(
+                x=future_dates,
+                y=[round(p, 2) for p in predictions],
+                name='Previsão',
+                line=dict(color='#FF00FF', width=3, dash='dot'),
+                marker=dict(size=8)
+            ))
+        
+        candle_fig.update_layout(
+            title='BTC/USD - Gráfico de Candles em Tempo Real',
+            xaxis_title='Data/Hora',
             yaxis_title='Preço (USD)',
             template='plotly_dark',
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#FFF')
+            height=600,
+            showlegend=True,
+            xaxis_rangeslider_visible=False
         )
         
         # Gráfico de RSI
-        rsi_fig = go.Figure()
-        rsi_fig.add_trace(go.Scatter(x=dates, y=rsi, mode='lines', name='RSI', line=dict(color='#9467BD')))
-        rsi_fig.add_hline(y=70, line_dash="dash", line_color="red")
-        rsi_fig.add_hline(y=30, line_dash="dash", line_color="green")
-        rsi_fig.update_layout(
-            title='RSI - Índice de Força Relativa',
-            xaxis_title='Data',
-            yaxis_title='RSI',
-            template='plotly_dark',
-            height=300,
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#FFF')
-        )
+        if 'RSI' in data:
+            rsi_fig = go.Figure()
+            rsi_fig.add_trace(go.Scatter(
+                x=dates, y=data['RSI'].round(2).tolist(),
+                name='RSI',
+                line=dict(color='#BB86FC', width=2)
+            ))
+            rsi_fig.add_hline(y=70, line_dash="dash", line_color="red")
+            rsi_fig.add_hline(y=30, line_dash="dash", line_color="green")
+            rsi_fig.add_hline(y=50, line_dash="dot", line_color="gray")
+            rsi_fig.update_layout(
+                title='RSI - Índice de Força Relativa',
+                height=250,
+                template='plotly_dark'
+            )
+            rsi_graph = json.dumps(rsi_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        else:
+            rsi_graph = None
         
         # Métricas
-        current_price = closes[-1]
+        current_price = closes[-1] if closes else 0
         prev_price = closes[-2] if len(closes) > 1 else current_price
         change = current_price - prev_price
-        change_percent = (change / prev_price) * 100
+        change_percent = (change / prev_price) * 100 if prev_price != 0 else 0
         
         return jsonify({
             'status': 'success',
-            'price_graph': json.dumps(price_fig, cls=plotly.utils.PlotlyJSONEncoder),
-            'rsi_graph': json.dumps(rsi_fig, cls=plotly.utils.PlotlyJSONEncoder),
+            'candle_graph': json.dumps(candle_fig, cls=plotly.utils.PlotlyJSONEncoder),
+            'rsi_graph': rsi_graph,
             'current_price': round(current_price, 2),
             'change': round(change, 2),
             'change_percent': round(change_percent, 2),
-            'rsi': round(rsi[-1], 2),
+            'rsi': round(data['RSI'].iloc[-1], 2) if 'RSI' in data else 50,
             'signal': signal,
             'signal_color': signal_color,
             'analysis': analysis,
-            'last_update': cache['last_update'].strftime('%Y-%m-%d %H:%M:%S') if cache['last_update'] else 'N/A'
+            'confidence': confidence,
+            'last_update': cache['last_update'].strftime('%Y-%m-%d %H:%M:%S')
         })
         
     except Exception as e:
-        print(f"Erro na API: {e}")
-        return jsonify({'status': 'error', 'message': 'Erro ao processar dados'})
+        print(f"Erro: {e}")
+        return jsonify({'status': 'error', 'message': str(e)})
 
-@app.route('/health')
-def health():
-    return jsonify({'status': 'healthy', 'data_loaded': cache['btc_data'] is not None})
+@app.route('/api/update')
+def update_data():
+    cache['btc_data'] = generate_candle_data()
+    cache['last_update'] = datetime.now()
+    return jsonify({'status': 'success', 'message': 'Dados atualizados'})
 
 if __name__ == '__main__':
-    # Pré-carregar dados ao iniciar
-    cache['btc_data'] = fetch_btc_data()
+    cache['btc_data'] = generate_candle_data()
     cache['last_update'] = datetime.now()
-    cache['market_status'] = 'active'
-    
     app.run(debug=False, host='0.0.0.0', port=5000)
