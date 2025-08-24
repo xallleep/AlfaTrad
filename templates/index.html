@@ -4,297 +4,295 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bitcoin Predictor Pro</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-bg: #0a0e17;
-            --card-bg: #131a2d;
+            --card-bg: #1a2238;
             --accent-green: #00C853;
             --accent-red: #FF1744;
             --accent-blue: #2962FF;
-            --accent-orange: #FF9800;
+            --accent-purple: #AA00FF;
         }
         
         body {
             background: var(--primary-bg);
             color: #ffffff;
             font-family: 'Roboto Mono', monospace;
-            padding: 0;
-            margin: 0;
-            overflow-x: hidden;
+            min-height: 100vh;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0e17 0%, #1a2238 100%);
         }
         
-        .terminal-header {
-            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
-            padding: 15px 0;
-            border-bottom: 1px solid #2962FF;
+        .glass-card {
+            background: rgba(26, 34, 56, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
         }
         
         .app-title {
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 2.5rem;
-            background: linear-gradient(45deg, #00C853, #2962FF, #FF9800);
+            font-size: 3rem;
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(41, 98, 255, 0.3);
+            text-shadow: 0 0 30px rgba(170, 0, 255, 0.5);
+            margin-bottom: 0;
         }
         
-        .market-data-bar {
-            background: rgba(19, 26, 45, 0.95);
-            padding: 10px 0;
-            border-bottom: 1px solid #1e88e5;
+        .subtitle {
+            color: #8892b0;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
         }
         
         .price-display {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.8rem;
+            font-size: 3.5rem;
             font-weight: 700;
+            text-shadow: 0 0 20px rgba(41, 98, 255, 0.3);
+        }
+        
+        .prediction-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 600;
         }
         
         .positive { color: var(--accent-green); }
         .negative { color: var(--accent-red); }
+        .neutral { color: var(--accent-blue); }
         
-        .signal-buy {
-            background: linear-gradient(135deg, var(--accent-green) 0%, #00E676 100%);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            box-shadow: 0 0 20px rgba(0, 200, 83, 0.4);
-            border: 2px solid #00E676;
-        }
-        
-        .signal-sell {
-            background: linear-gradient(135deg, var(--accent-red) 0%, #F50057 100%);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            box-shadow: 0 0 20px rgba(255, 23, 68, 0.4);
-            border: 2px solid #F50057;
-        }
-        
-        .signal-neutral {
-            background: linear-gradient(135deg, #78909C 0%, #B0BEC5 100%);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            box-shadow: 0 0 20px rgba(120, 144, 156, 0.4);
-            border: 2px solid #B0BEC5;
-        }
-        
-        .chart-container {
-            background: var(--card-bg);
-            border-radius: 15px;
-            padding: 20px;
+        .trend-indicator {
+            font-size: 2rem;
             margin: 15px 0;
-            border: 1px solid #1e88e5;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.3);
         }
         
         .confidence-meter {
-            height: 20px;
-            background: #2c3e50;
-            border-radius: 10px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
             overflow: hidden;
-            margin: 15px 0;
+            margin: 20px 0;
+            position: relative;
         }
         
         .confidence-fill {
             height: 100%;
-            border-radius: 10px;
-            transition: width 0.5s ease;
+            border-radius: 12px;
+            transition: width 1s ease-in-out;
+            background: linear-gradient(90deg, #FF1744, #FF9800, #00C853);
         }
         
-        .confidence-buy { background: linear-gradient(90deg, #00C853, #00E676); }
-        .confidence-sell { background: linear-gradient(90deg, #FF1744, #F50057); }
-        .confidence-neutral { background: linear-gradient(90deg, #78909C, #B0BEC5); }
+        .confidence-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: white;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+        }
+        
+        .info-badge {
+            background: rgba(41, 98, 255, 0.2);
+            border: 1px solid var(--accent-blue);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
         
         .refresh-btn {
-            background: linear-gradient(135deg, #2962FF 0%, #1A237E 100%);
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             border: none;
-            border-radius: 20px;
-            padding: 10px 20px;
+            border-radius: 25px;
+            padding: 12px 25px;
             color: white;
             font-weight: bold;
             transition: all 0.3s ease;
+            width: 100%;
         }
         
         .refresh-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(41, 98, 255, 0.4);
+            box-shadow: 0 8px 25px rgba(170, 0, 255, 0.4);
         }
         
-        .analysis-text {
-            background: rgba(41, 98, 255, 0.1);
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 4px solid #2962FF;
-            margin: 15px 0;
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 1s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
-    <div class="terminal-header">
-        <div class="container">
-            <div class="text-center">
-                <h1 class="app-title">BITCOIN PREDICTOR PRO</h1>
-                <p class="text-light">Gráfico Profissional • Previsão em Tempo Real • Análise Técnica</p>
-            </div>
+    <div class="container">
+        <!-- Header -->
+        <div class="text-center mb-5 fade-in">
+            <h1 class="app-title">BITCOIN PREDICTOR PRO</h1>
+            <p class="subtitle">Previsão para 90 minutos • Algoritmo avançado • Tempo real</p>
         </div>
-    </div>
 
-    <div class="market-data-bar">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-4 text-center">
-                    <div class="price-display">
-                        <span id="currentPrice">--</span>
-                        <span id="priceChange"></span>
-                    </div>
-                </div>
-                <div class="col-md-4 text-center">
-                    <div id="tradingSignal" class="signal-neutral">CARREGANDO...</div>
-                </div>
-                <div class="col-md-4 text-center">
-                    <button onclick="loadData()" class="refresh-btn">
-                        <i class="fas fa-sync-alt"></i> ATUALIZAR
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container mt-4">
         <div class="row">
-            <div class="col-lg-9">
-                <div class="chart-container">
-                    <div id="candleChart" style="height: 600px;"></div>
+            <!-- Preço Atual -->
+            <div class="col-md-6 mb-4">
+                <div class="glass-card text-center">
+                    <h3><i class="fas fa-coins"></i> PREÇO ATUAL</h3>
+                    <div class="price-display" id="currentPrice">
+                        $--.--
+                    </div>
+                    <div class="mt-3">
+                        <span class="info-badge">
+                            <i class="fas fa-sync-alt"></i> Atualizado: <span id="lastUpdate">--:--:--</span>
+                        </span>
+                    </div>
                 </div>
             </div>
-            
-            <div class="col-lg-3">
-                <div class="chart-container">
-                    <h5><i class="fas fa-brain"></i> CONFIANÇA DA PREVISÃO</h5>
-                    <div class="confidence-meter">
-                        <div id="confidenceBar" class="confidence-fill" style="width: 50%;"></div>
+
+            <!-- Previsão -->
+            <div class="col-md-6 mb-4">
+                <div class="glass-card text-center">
+                    <h3><i class="fas fa-crystal-ball"></i> PREVISÃO 90min</h3>
+                    <div class="prediction-display" id="prediction">
+                        $--.--
                     </div>
-                    <div id="confidenceText" class="text-center">50%</div>
-                    
-                    <div class="analysis-text">
-                        <h6><i class="fas fa-chart-line"></i> ANÁLISE</h6>
-                        <p id="analysisText">Analisando dados de mercado...</p>
-                    </div>
-                    
-                    <div class="text-center">
-                        <h6><i class="fas fa-info-circle"></i> INFORMAÇÕES</h6>
-                        <p>RSI: <span id="rsiValue">--</span></p>
-                        <p>Última atualização: <br><span id="lastUpdate">--</span></p>
+                    <div class="trend-indicator" id="trend">
+                        ⏸️ ANALISANDO...
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="row mt-3">
-            <div class="col-12">
-                <div class="chart-container">
-                    <div id="rsiChart" style="height: 250px;"></div>
-                </div>
+
+        <!-- Confiança -->
+        <div class="glass-card mb-4">
+            <h4 class="text-center mb-4"><i class="fas fa-brain"></i> CONFIANÇA DA PREVISÃO</h4>
+            <div class="confidence-meter">
+                <div class="confidence-fill" id="confidenceBar" style="width: 0%;"></div>
+                <div class="confidence-text" id="confidenceText">0%</div>
             </div>
+            <div class="text-center mt-3">
+                <span class="info-badge">
+                    <i class="fas fa-database"></i> Dados analisados: <span id="historyCount">0</span>
+                </span>
+                <span class="info-badge">
+                    <i class="fas fa-clock"></i> Próxima atualização: <span id="nextUpdate">--:--:--</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="glass-card text-center">
+            <button class="refresh-btn pulse" onclick="loadData()">
+                <i class="fas fa-bolt"></i> ATUALIZAR AGORA
+            </button>
+        </div>
+
+        <!-- Informações -->
+        <div class="text-center mt-4">
+            <p class="text-muted">
+                <i class="fas fa-info-circle"></i> 
+                Previsão baseada em algoritmo proprietário analisando tendências e volatilidade do mercado.
+            </p>
         </div>
     </div>
 
     <script>
         function loadData() {
-            document.getElementById('tradingSignal').innerHTML = '<i class="fas fa-spinner fa-spin"></i> ATUALIZANDO...';
+            // Efeito visual de loading
+            document.getElementById('trend').innerHTML = '<i class="fas fa-spinner fa-spin"></i> ANALISANDO...';
             
-            fetch('/api/btc-data')
+            fetch('/api/data')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'success') {
-                        updateDisplay(data);
-                    }
+                    updateDisplay(data);
                 })
                 .catch(error => {
                     console.error('Erro:', error);
-                    document.getElementById('tradingSignal').textContent = 'ERRO ⚠️';
+                    document.getElementById('trend').innerHTML = '⚠️ ERRO DE CONEXÃO';
                 });
         }
-        
+
         function updateDisplay(data) {
-            // Atualizar preço
-            const currentPrice = document.getElementById('currentPrice');
-            currentPrice.textContent = '$' + data.current_price.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+            // Preço atual
+            const currentPriceElem = document.getElementById('currentPrice');
+            currentPriceElem.textContent = `$${data.current_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             
-            // Atualizar variação
-            const changeElem = document.getElementById('priceChange');
-            if (data.change >= 0) {
-                changeElem.innerHTML = `<span class="positive">+$${Math.abs(data.change).toFixed(2)} (${Math.abs(data.change_percent).toFixed(2)}%)</span>`;
+            // Previsão
+            const predictionElem = document.getElementById('prediction');
+            predictionElem.textContent = `$${data.prediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            
+            // Tendência
+            const trendElem = document.getElementById('trend');
+            trendElem.textContent = data.trend;
+            
+            // Colorir baseado na tendência
+            if (data.trend.includes('ALTA')) {
+                trendElem.className = 'trend-indicator positive';
+                predictionElem.className = 'prediction-display positive';
+            } else if (data.trend.includes('BAIXA')) {
+                trendElem.className = 'trend-indicator negative';
+                predictionElem.className = 'prediction-display negative';
             } else {
-                changeElem.innerHTML = `<span class="negative">-$${Math.abs(data.change).toFixed(2)} (${Math.abs(data.change_percent).toFixed(2)}%)</span>`;
+                trendElem.className = 'trend-indicator neutral';
+                predictionElem.className = 'prediction-display neutral';
             }
             
-            // Atualizar sinal
-            const signalElem = document.getElementById('tradingSignal');
-            signalElem.innerHTML = data.signal;
-            signalElem.className = `signal-${data.signal.toLowerCase().split(' ')[0]}`;
-            
-            // Atualizar análise
-            document.getElementById('analysisText').innerHTML = data.analysis;
-            
-            // Atualizar confiança
+            // Confiança
             const confidenceBar = document.getElementById('confidenceBar');
             const confidenceText = document.getElementById('confidenceText');
             confidenceBar.style.width = data.confidence + '%';
             confidenceText.textContent = data.confidence + '%';
             
-            // Atualizar gráficos
-            if (data.candle_graph) {
-                const candleGraph = JSON.parse(data.candle_graph);
-                Plotly.newPlot('candleChart', candleGraph.data, candleGraph.layout, {
-                    responsive: true,
-                    displayModeBar: true,
-                    displaylogo: false
-                });
-            }
-            
-            if (data.rsi_graph) {
-                const rsiGraph = JSON.parse(data.rsi_graph);
-                Plotly.newPlot('rsiChart', rsiGraph.data, rsiGraph.layout, {
-                    responsive: true,
-                    displayModeBar: true,
-                    displaylogo: false
-                });
-            }
-            
-            // Atualizar outras informações
-            document.getElementById('rsiValue').textContent = data.rsi;
+            // Informações
             document.getElementById('lastUpdate').textContent = data.last_update;
+            document.getElementById('nextUpdate').textContent = data.next_update;
+            document.getElementById('historyCount').textContent = data.history_count;
+            
+            // Efeito visual
+            predictionElem.classList.add('pulse');
+            setTimeout(() => predictionElem.classList.remove('pulse'), 2000);
         }
-        
+
         // Carregar dados inicialmente e a cada 30 segundos
         loadData();
         setInterval(loadData, 30000);
-        
-        // Efeito de terminal
+
+        // Efeitos visuais iniciais
         document.addEventListener('DOMContentLoaded', function() {
-            const elements = document.querySelectorAll('.chart-container');
-            elements.forEach((el, index) => {
-                setTimeout(() => {
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
-                }, index * 200);
+            const cards = document.querySelectorAll('.glass-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.2}s`;
             });
         });
     </script>
