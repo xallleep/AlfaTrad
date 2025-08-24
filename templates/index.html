@@ -7,9 +7,6 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-bg: #0a0e17;
@@ -23,8 +20,8 @@
         body {
             background: var(--primary-bg);
             color: #ffffff;
-            font-family: 'Roboto', sans-serif;
-            padding-top: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
             min-height: 100vh;
         }
         
@@ -39,44 +36,23 @@
             padding: 15px;
             background: linear-gradient(135deg, var(--card-bg) 0%, #1a2d4d 100%);
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
         
         .app-title {
-            font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             margin: 0;
-            background: linear-gradient(45deg, #2962ff, #00c853, #ff9800);
+            background: linear-gradient(45deg, #2962ff, #00c853);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 10px rgba(41, 98, 255, 0.3);
-        }
-        
-        .app-subtitle {
-            font-size: 1rem;
-            opacity: 0.8;
-            margin: 5px 0 0;
         }
         
         .card {
             background: var(--card-bg);
             border-radius: 15px;
             border: none;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             margin-bottom: 20px;
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .card-header {
-            background: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            font-weight: 500;
-            font-size: 1.2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
         .price-display {
@@ -85,72 +61,35 @@
         }
         
         .current-price {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: 700;
-            margin: 0;
         }
         
-        .price-change {
-            font-size: 1.5rem;
-            font-weight: 500;
-        }
-        
-        .positive {
-            color: var(--positive-color);
-        }
-        
-        .negative {
-            color: var(--negative-color);
-        }
+        .positive { color: var(--positive-color); }
+        .negative { color: var(--negative-color); }
         
         .signal-buy {
-            background: linear-gradient(135deg, var(--positive-color) 0%, #00e676 100%);
+            background: var(--positive-color);
             color: white;
             padding: 10px 20px;
-            border-radius: 30px;
+            border-radius: 20px;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 0 15px rgba(0, 200, 83, 0.5);
         }
         
         .signal-sell {
-            background: linear-gradient(135deg, var(--negative-color) 0%, #f50057 100%);
+            background: var(--negative-color);
             color: white;
             padding: 10px 20px;
-            border-radius: 30px;
+            border-radius: 20px;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 0 15px rgba(255, 23, 68, 0.5);
         }
         
         .signal-neutral {
-            background: linear-gradient(135deg, var(--neutral-color) 0%, #ffab40 100%);
+            background: var(--neutral-color);
             color: white;
             padding: 10px 20px;
-            border-radius: 30px;
+            border-radius: 20px;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 0 15px rgba(255, 152, 0, 0.5);
-        }
-        
-        .metric-card {
-            text-align: center;
-            padding: 15px;
-        }
-        
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin: 0;
-        }
-        
-        .metric-label {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            margin: 0;
         }
         
         .chart-container {
@@ -158,139 +97,60 @@
             width: 100%;
         }
         
-        .rsi-chart-container {
-            height: 300px;
-            width: 100%;
-        }
-        
         .loading {
             text-align: center;
             padding: 40px;
         }
-        
-        .last-update {
-            font-size: 0.9rem;
-            opacity: 0.7;
-            text-align: center;
-            padding: 10px;
-        }
-        
-        .analysis-text {
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            margin: 15px 0;
-            font-size: 0.95rem;
-        }
-        
-        @media (max-width: 768px) {
-            .app-title {
-                font-size: 1.8rem;
-            }
-            
-            .current-price {
-                font-size: 2.2rem;
-            }
-            
-            .price-change {
-                font-size: 1.2rem;
-            }
-            
-            .metric-value {
-                font-size: 1.4rem;
-            }
-            
-            .chart-container {
-                height: 300px;
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="container-fluid app-container">
+    <div class="app-container">
         <div class="header">
-            <h1 class="app-title">BITCOIN PREDICTOR PRO</h1>
-            <p class="app-subtitle">Previsões em tempo real com inteligência artificial</p>
+            <h1 class="app-title">BITCOIN PREDICTOR</h1>
+            <p>Análise em tempo real simplificada</p>
         </div>
         
         <div class="row">
-            <!-- Painel principal de preços -->
             <div class="col-lg-8">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>Gráfico de Preços BTC/USD</span>
-                        <span class="badge bg-info" id="marketStatus">Carregando...</span>
-                    </div>
                     <div class="card-body">
                         <div id="priceChart" class="chart-container">
                             <div class="loading">
-                                <i class="fas fa-spinner fa-spin fa-2x"></i>
-                                <p>Carregando dados do Bitcoin...</p>
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Carregando gráfico...</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="card">
-                    <div class="card-header">
-                        Indicador RSI
-                    </div>
                     <div class="card-body">
-                        <div id="rsiChart" class="rsi-chart-container"></div>
+                        <div id="rsiChart" class="chart-container" style="height: 300px;"></div>
                     </div>
                 </div>
             </div>
             
-            <!-- Painel lateral de informações -->
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-body price-display">
-                        <p class="metric-label">Preço Atual do Bitcoin</p>
-                        <h2 class="current-price" id="currentPrice">--</h2>
-                        <p class="price-change" id="priceChange">--</p>
+                        <h2 id="currentPrice" class="current-price">--</h2>
+                        <p id="priceChange">--</p>
                     </div>
                 </div>
                 
                 <div class="card">
-                    <div class="card-header">
-                        Sinal de Trading
-                    </div>
                     <div class="card-body text-center">
-                        <div id="tradingSignal" class="signal-neutral">ANALISANDO</div>
-                        <div class="analysis-text" id="analysisText">
-                            Analisando dados de mercado...
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card metric-card">
-                            <p class="metric-label">Índice RSI</p>
-                            <h3 class="metric-value" id="rsiValue">--</h3>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card metric-card">
-                            <p class="metric-label">Volume (24h)</p>
-                            <h3 class="metric-value" id="volumeValue">--</h3>
-                        </div>
+                        <div id="tradingSignal" class="signal-neutral">CARREGANDO</div>
+                        <p id="analysisText" class="mt-3">Analisando dados...</p>
                     </div>
                 </div>
                 
                 <div class="card">
-                    <div class="card-header">
-                        Estatísticas do Mercado
-                    </div>
                     <div class="card-body">
-                        <div class="last-update">
-                            <i class="fas fa-sync-alt"></i> 
-                            <span id="lastUpdate">Última atualização: --</span>
-                        </div>
-                        <div class="last-update">
-                            <i class="fas fa-clock"></i> 
-                            <span id="nextUpdate">Próxima atualização: --</span>
-                        </div>
+                        <p>Última atualização: <span id="lastUpdate">--</span></p>
+                        <button onclick="loadData()" class="btn btn-primary btn-sm">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                        </button>
                     </div>
                 </div>
             </div>
@@ -298,116 +158,51 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const priceChart = document.getElementById('priceChart');
-            const rsiChart = document.getElementById('rsiChart');
-            const currentPrice = document.getElementById('currentPrice');
-            const priceChange = document.getElementById('priceChange');
-            const tradingSignal = document.getElementById('tradingSignal');
-            const analysisText = document.getElementById('analysisText');
-            const rsiValue = document.getElementById('rsiValue');
-            const volumeValue = document.getElementById('volumeValue');
-            const lastUpdate = document.getElementById('lastUpdate');
-            const nextUpdate = document.getElementById('nextUpdate');
-            const marketStatus = document.getElementById('marketStatus');
-            
-            // Função para formatar números grandes
-            function formatNumber(num) {
-                if (!num || isNaN(num)) return '0';
-                
-                if (num >= 1000000000) {
-                    return (num / 1000000000).toFixed(2) + 'B';
-                }
-                if (num >= 1000000) {
-                    return (num / 1000000).toFixed(2) + 'M';
-                }
-                if (num >= 1000) {
-                    return (num / 1000).toFixed(2) + 'K';
-                }
-                return num.toFixed(2);
-            }
-            
-            // Função para carregar dados
-            function loadData() {
-                fetch('/api/btc-data')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Erro na rede');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.status === 'loading') {
-                            marketStatus.textContent = 'Carregando...';
-                            marketStatus.className = 'badge bg-secondary';
-                            return;
-                        }
-                        
-                        if (data.status === 'error') {
-                            marketStatus.textContent = 'Erro de conexão';
-                            marketStatus.className = 'badge bg-danger';
-                            return;
-                        }
-                        
-                        marketStatus.textContent = 'Ativo';
-                        marketStatus.className = 'badge bg-success';
-                        
+        function loadData() {
+            fetch('/api/btc-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
                         // Atualizar preço
-                        currentPrice.textContent = '$' + data.current_price.toLocaleString('en-US', {maximumFractionDigits: 2});
+                        document.getElementById('currentPrice').textContent = '$' + data.current_price.toLocaleString();
                         
-                        // Atualizar variação de preço
-                        const changeClass = data.change >= 0 ? 'positive' : 'negative';
-                        const changeIcon = data.change >= 0 ? '▲' : '▼';
-                        priceChange.innerHTML = `<span class="${changeClass}">${changeIcon} $${Math.abs(data.change).toFixed(2)} (${Math.abs(data.change_percent).toFixed(2)}%)</span>`;
+                        // Atualizar variação
+                        const changeElem = document.getElementById('priceChange');
+                        changeElem.innerHTML = data.change >= 0 ? 
+                            `<span class="positive">+$${Math.abs(data.change).toFixed(2)} (${Math.abs(data.change_percent).toFixed(2)}%)</span>` :
+                            `<span class="negative">-$${Math.abs(data.change).toFixed(2)} (${Math.abs(data.change_percent).toFixed(2)}%)</span>`;
                         
-                        // Atualizar sinal de trading
-                        tradingSignal.textContent = data.signal;
-                        tradingSignal.className = `signal-${data.signal.toLowerCase()}`;
+                        // Atualizar sinal
+                        const signalElem = document.getElementById('tradingSignal');
+                        signalElem.textContent = data.signal;
+                        signalElem.className = `signal-${data.signal.toLowerCase()}`;
                         
                         // Atualizar análise
-                        analysisText.textContent = data.analysis;
-                        
-                        // Atualizar RSI
-                        rsiValue.textContent = data.rsi;
-                        if (data.rsi < 30) {
-                            rsiValue.className = 'metric-value positive';
-                        } else if (data.rsi > 70) {
-                            rsiValue.className = 'metric-value negative';
-                        } else {
-                            rsiValue.className = 'metric-value';
-                        }
-                        
-                        // Atualizar volume
-                        volumeValue.textContent = formatNumber(data.volume);
+                        document.getElementById('analysisText').textContent = data.analysis;
                         
                         // Atualizar gráficos
                         if (data.price_graph) {
                             const priceGraph = JSON.parse(data.price_graph);
-                            Plotly.newPlot('priceChart', priceGraph.data, priceGraph.layout, {responsive: true});
+                            Plotly.newPlot('priceChart', priceGraph.data, priceGraph.layout);
                         }
                         
                         if (data.rsi_graph) {
                             const rsiGraph = JSON.parse(data.rsi_graph);
-                            Plotly.newPlot('rsiChart', rsiGraph.data, rsiGraph.layout, {responsive: true});
+                            Plotly.newPlot('rsiChart', rsiGraph.data, rsiGraph.layout);
                         }
                         
-                        // Atualizar horários
-                        lastUpdate.textContent = `Última atualização: ${data.last_update}`;
-                        nextUpdate.textContent = `Próxima atualização: ${data.next_update}`;
-                    })
-                    .catch(error => {
-                        console.error('Erro:', error);
-                        marketStatus.textContent = 'Erro de conexão';
-                        marketStatus.className = 'badge bg-danger';
-                    });
-            }
-            
-            // Carregar dados inicialmente
-            loadData();
-            
-            // Atualizar a cada minuto
-            setInterval(loadData, 60000);
-        });
+                        // Atualizar horário
+                        document.getElementById('lastUpdate').textContent = data.last_update;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                });
+        }
+        
+        // Carregar dados inicialmente e a cada 30 segundos
+        loadData();
+        setInterval(loadData, 30000);
     </script>
 </body>
 </html>
