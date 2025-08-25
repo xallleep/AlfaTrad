@@ -1,171 +1,157 @@
 from flask import Flask, render_template, jsonify
 import requests
+import numpy as np
 from datetime import datetime, timedelta
 import time
 import threading
-import numpy as np
 
 app = Flask(__name__)
 
-# Configurações
-UPDATE_INTERVAL = 30  # Atualizar a cada 30 segundos
-
-# Cache para dados
-cache = {
-    'current_price': None,
-    'direction': 'ANALISANDO',
-    'confidence': 0,
-    'prediction_time': None,
-    'trend_strength': 'MODERADA',
-    'last_update': None,
-    'price_history': []
+# Estado global do sistema
+market_data = {
+    'status': 'active',
+    'bitcoin_price': 0,
+    'direction': '🔄 ANALISANDO',
+    'confidence': 50,
+    'trend_strength': 'COLETANDO DADOS',
+    'last_update': datetime.now().strftime('%H:%M:%S'),
+    'prediction_time': (datetime.now() + timedelta(minutes=90)).strftime('%H:%M'),
+    'history': [],
+    'update_count': 0
 }
 
-# Buscar preço real do Bitcoin
-def get_real_btc_price():
+def get_bitcoin_price():
+    """Obtém o preço real do Bitcoin de múltiplas fontes"""
     try:
-        # Múltiplas fontes para confiabilidade
-        apis = [
+        # Tentar CoinGecko primeiro
+        response = requests.get(
             'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+            timeout=5
+        )
+        if response.status_code == 200:
+            data = response.json()
+            return data['bitcoin']['usd'], True
+
+        # Fallback para Binance
+        response = requests.get(
             'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT',
-            'https://api.coinbase.com/v2/prices/BTC-USD/spot'
-        ]
-        
-        for api_url in apis:
-            try:
-                response = requests.get(api_url, timeout=5)
-                if response.status_code == 200:
-                    data = response.json()
-                    if 'bitcoin' in api_url:
-                        return data['bitcoin']['usd'], True
-                    elif 'binance' in api_url:
-                        return float(data['price']), True
-                    elif 'coinbase' in api_url:
-                        return float(data['data']['amount']), True
-            except:
-                continue
-                
-        return None, False
-        
+            timeout=5
+        )
+        if response.status_code == 200:
+            data = response.json()
+            return float(data['price']), True
+
     except Exception as e:
         print(f"Erro ao buscar preço: {e}")
-        return None, False
 
-# Análise técnica realista
-def analyze_trend():
-    if len(cache['price_history']) < 10:
-        return 'ANALISANDO', 0, 'COLETANDO DADOS'
-    
+    return market_data['bitcoin_price'], False
+
+def analyze_market_trend():
+    """Analisa a tendência do mercado com algoritmo realista"""
+    if len(market_data['history']) < 10:
+        return '🔄 ANALISANDO', 50, 'COLETANDO DADOS'
+
     try:
-        prices = np.array(cache['price_history'][-30:])  # Últimos 30 preços
+        prices = np.array(market_data['history'][-20:])  # Últimos 20 preços
         
-        # Análise de tendência de curto prazo (últimos 15 minutos)
-        short_term = prices[-6:]  # 6 preços = 3 minutos
-        short_slope = np.polyfit(range(len(short_term)), short_term, 1)[0]
+        # Calcular tendência de curto prazo
+        short_term = prices[-5:]
+        short_trend = np.polyfit(range(len(short_term)), short_term, 1)[0]
         
-        # Análise de tendência de médio prazo (última hora)
-        medium_term = prices[-30:]  # 30 preços = 15 minutos
-        medium_slope = np.polyfit(range(len(medium_term)), medium_term, 1)[0]
+        # Calcular tendência de médio prazo
+        medium_trend = np.polyfit(range(len(prices)), prices, 1)[0]
         
-        # Calcular força da tendência
-        trend_strength = abs(medium_slope) * 10000  # Normalizar
+        # Calcular volatilidade
+        price_changes = np.diff(prices) / prices[:-1]
+        volatility = np.std(price_changes) * 100 if len(price_changes) > 0 else 0.5
         
-        # Determinar direção baseada nas duas análises
-        if short_slope > 0 and medium_slope > 0:
-            direction = 'SUBINDO ↗️'
-            confidence = min(95, 70 + int(trend_strength * 10))
-        elif short_slope < 0 and medium_slope < 0:
-            direction = 'DESCENDO ↘️'
-            confidence = min(95, 70 + int(trend_strength * 10))
-        elif abs(short_slope) < 0.1 and abs(medium_slope) < 0.1:
-            direction = 'ESTÁVEL →'
+        # Determinar direção baseada nas tendências
+        if short_trend > 0 and medium_trend > 0:
+            direction = '📈 SUBINDO'
+            confidence = min(95, 70 + int(volatility * 2))
+            strength = 'FORTE' if volatility > 1 else 'MODERADA'
+        elif short_trend < 0 and medium_trend < 0:
+            direction = '📉 DESCENDO'
+            confidence = min(95, 70 + int(volatility * 2))
+            strength = 'FORTE' if volatility > 1 else 'MODERADA'
+        else:
+            direction = '↔️ ESTÁVEL'
             confidence = 75
-        else:
-            # Tendências conflitantes
-            direction = 'INDECISO 🔄'
-            confidence = 50
-        
-        # Determinar força da tendência
-        if trend_strength > 2:
-            strength = 'FORTE'
-        elif trend_strength > 0.5:
-            strength = 'MODERADA'
-        else:
-            strength = 'FRACA'
-        
+            strength = 'NEUTRA'
+
         return direction, confidence, strength
-        
+
     except Exception as e:
         print(f"Erro na análise: {e}")
-        return 'ANALISANDO', 0, 'EM ANÁLISE'
+        return '🔄 ANALISANDO', 50, 'EM ANÁLISE'
 
-# Atualizar dados
-def update_btc_data():
+def update_market_data():
+    """Atualiza os dados do mercado a cada 30 segundos"""
     while True:
         try:
-            current_price, success = get_real_btc_price()
+            # Obter preço atual
+            new_price, success = get_bitcoin_price()
             
-            if success and current_price is not None:
-                cache['current_price'] = current_price
-                cache['price_history'].append(current_price)
+            if success:
+                market_data['bitcoin_price'] = new_price
+                market_data['history'].append(new_price)
                 
                 # Manter histórico gerenciável
-                if len(cache['price_history']) > 100:
-                    cache['price_history'] = cache['price_history'][-100:]
+                if len(market_data['history']) > 50:
+                    market_data['history'] = market_data['history'][-50:]
                 
-                # Fazer análise
-                direction, confidence, strength = analyze_trend()
+                # Analisar tendência
+                direction, confidence, strength = analyze_market_trend()
                 
-                cache['direction'] = direction
-                cache['confidence'] = confidence
-                cache['trend_strength'] = strength
-                cache['prediction_time'] = (datetime.now() + timedelta(minutes=90)).strftime('%H:%M')
-                cache['last_update'] = datetime.now().strftime('%H:%M:%S')
+                # Atualizar dados
+                market_data['direction'] = direction
+                market_data['confidence'] = confidence
+                market_data['trend_strength'] = strength
+                market_data['last_update'] = datetime.now().strftime('%H:%M:%S')
+                market_data['prediction_time'] = (datetime.now() + timedelta(minutes=90)).strftime('%H:%M')
+                market_data['update_count'] += 1
                 
-                print(f"📊 {direction} | Confiança: {confidence}% | Força: {strength}")
-                
-            else:
-                print("⚠️  Aguardando dados...")
-                
+                print(f"✅ Atualizado: {direction} | Confiança: {confidence}%")
+
+            time.sleep(30)  # Atualizar a cada 30 segundos
+            
         except Exception as e:
             print(f"❌ Erro na atualização: {e}")
-        
-        time.sleep(UPDATE_INTERVAL)
+            time.sleep(10)
 
-# Rotas
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/api/status')
-def get_status():
+@app.route('/api/data')
+def get_data():
     return jsonify({
-        'direction': cache['direction'],
-        'confidence': cache['confidence'],
-        'trend_strength': cache['trend_strength'],
-        'prediction_time': cache['prediction_time'],
-        'last_update': cache['last_update'],
-        'history_count': len(cache['price_history']),
-        'status': 'success'
+        'success': True,
+        'direction': market_data['direction'],
+        'confidence': market_data['confidence'],
+        'trend_strength': market_data['trend_strength'],
+        'last_update': market_data['last_update'],
+        'prediction_time': market_data['prediction_time'],
+        'update_count': market_data['update_count'],
+        'history_size': len(market_data['history'])
     })
 
-@app.route('/api/health')
-def health_check():
+@app.route('/api/price')
+def get_price():
     return jsonify({
-        'status': 'healthy', 
-        'has_data': len(cache['price_history']) > 0,
-        'updated': cache['last_update']
+        'price': market_data['bitcoin_price'],
+        'currency': 'USD'
     })
 
-# Iniciar thread de atualização
-def start_update_thread():
-    thread = threading.Thread(target=update_btc_data, daemon=True)
-    thread.start()
-    print("🔄 Sistema de análise iniciado")
-
-# Inicialização
-with app.app_context():
-    start_update_thread()
+# Iniciar thread de atualização em background
+update_thread = threading.Thread(target=update_market_data, daemon=True)
+update_thread.start()
 
 if __name__ == '__main__':
+    # Primeira atualização imediata
+    initial_price, _ = get_bitcoin_price()
+    market_data['bitcoin_price'] = initial_price
+    market_data['history'] = [initial_price] * 10  # Inicializar com dados
+    
+    print("🚀 Bitcoin Predictor Pro Iniciado!")
     app.run(debug=False, host='0.0.0.0', port=5000)

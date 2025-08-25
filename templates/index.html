@@ -14,143 +14,215 @@
             --color-loading: #FF9800;
             --bg-dark: #0a0e17;
             --card-bg: #1a2238;
+            --gradient-up: linear-gradient(135deg, #00C853 0%, #00E676 100%);
+            --gradient-down: linear-gradient(135deg, #FF1744 0%, #F50057 100%);
+            --gradient-neutral: linear-gradient(135deg, #2962FF 0%, #448AFF 100%);
         }
-        
+
         body {
             background: var(--bg-dark);
             color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
+            padding: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
         }
-        
+
         .container {
             max-width: 500px;
             text-align: center;
         }
-        
-        .status-card {
-            background: var(--card-bg);
+
+        .glass-card {
+            background: rgba(26, 34, 56, 0.8);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 40px 30px;
+            padding: 30px;
             margin: 20px 0;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            border: 2px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             transition: all 0.3s ease;
         }
-        
-        .status-card:hover {
+
+        .glass-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
         }
-        
+
         .direction-display {
-            font-size: 3.5rem;
+            font-size: 2.8rem;
             font-weight: bold;
-            margin: 20px 0;
-            min-height: 80px;
+            margin: 25px 0;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.5s ease;
         }
-        
-        .direction-up { color: var(--color-up); }
-        .direction-down { color: var(--color-down); }
-        .direction-neutral { color: var(--color-neutral); }
-        .direction-loading { color: var(--color-loading); }
-        
-        .confidence-display {
-            font-size: 5rem;
-            font-weight: bold;
-            margin: 10px 0;
-            text-shadow: 0 0 20px currentColor;
+
+        .direction-up {
+            background: var(--gradient-up);
+            color: white;
+            text-shadow: 0 2px 10px rgba(0, 200, 83, 0.5);
         }
-        
-        .trend-strength {
-            font-size: 1.4rem;
-            margin: 15px 0;
-            padding: 10px 20px;
-            border-radius: 25px;
-            background: rgba(255,255,255,0.1);
-            display: inline-block;
+
+        .direction-down {
+            background: var(--gradient-down);
+            color: white;
+            text-shadow: 0 2px 10px rgba(255, 23, 68, 0.5);
         }
-        
-        .prediction-time {
-            font-size: 1.3rem;
-            margin: 20px 0;
-            color: #8892b0;
+
+        .direction-neutral {
+            background: var(--gradient-neutral);
+            color: white;
+            text-shadow: 0 2px 10px rgba(41, 98, 255, 0.5);
         }
-        
-        .info-row {
+
+        .direction-loading {
+            background: rgba(255, 152, 0, 0.2);
+            color: var(--color-loading);
+        }
+
+        .confidence-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
             display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-            font-size: 0.9rem;
-            color: #a0aec0;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 20px auto;
+            border: 4px solid;
+            transition: all 0.5s ease;
         }
-        
+
+        .confidence-up { border-color: var(--color-up); color: var(--color-up); }
+        .confidence-down { border-color: var(--color-down); color: var(--color-down); }
+        .confidence-neutral { border-color: var(--color-neutral); color: var(--color-neutral); }
+
+        .trend-badge {
+            font-size: 1.3rem;
+            padding: 10px 25px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            display: inline-block;
+            margin: 15px 0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
         .pulse {
             animation: pulse 2s infinite;
         }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
+
+        .glow {
+            animation: glow 2s infinite;
         }
-        
+
         @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 20px currentColor; }
+            50% { box-shadow: 0 0 30px currentColor; }
+            100% { box-shadow: 0 0 20px currentColor; }
         }
-        
-        .glow-up { text-shadow: 0 0 30px var(--color-up); }
-        .glow-down { text-shadow: 0 0 30px var(--color-down); }
-        .glow-neutral { text-shadow: 0 0 30px var(--color-neutral); }
+
+        .btn-premium {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 15px 30px;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Header -->
-        <div class="mb-4 fade-in">
-            <h1><i class="fas fa-chart-line"></i> Bitcoin Predictor Pro</h1>
-            <p class="text-muted">Previsão para as próximas 90 minutos</p>
+        <div class="mb-4">
+            <h1 class="fw-bold"><i class="fas fa-bitcoin"></i> Bitcoin Predictor Pro</h1>
+            <p class="text-muted">Previsão em tempo real para as próximas 90 minutos</p>
         </div>
 
         <!-- Card Principal -->
-        <div class="status-card fade-in">
-            <div id="directionDisplay">
-                <div class="direction-display direction-loading">
-                    <i class="fas fa-spinner fa-spin"></i><br>
-                    ANALISANDO
-                </div>
-            </div>
+        <div class="glass-card">
+            <h4 class="mb-4"><i class="fas fa-chart-line"></i> STATUS DO MERCADO</h4>
             
-            <div class="confidence-display" id="confidenceDisplay">
-                --
+            <div id="directionDisplay" class="direction-display direction-loading pulse">
+                <i class="fas fa-spinner fa-spin"></i><br>
+                ANALISANDO
             </div>
-            
-            <div class="trend-strength" id="trendStrength">
-                <i class="fas fa-wave-square"></i> COLETANDO DADOS
+
+            <div class="confidence-circle confidence-up" id="confidenceCircle">
+                <span id="confidenceValue">50%</span>
             </div>
-            
-            <div class="prediction-time">
-                <i class="fas fa-clock"></i> Previsão válida até: <span id="predictionTime">--:--</span>
+
+            <div class="trend-badge" id="trendBadge">
+                <i class="fas fa-wave-square"></i> FORÇA: COLETANDO DADOS
             </div>
         </div>
 
         <!-- Informações -->
-        <div class="info-row">
-            <span><i class="fas fa-database"></i> <span id="dataPoints">0</span> dados</span>
-            <span><i class="fas fa-sync-alt"></i> <span id="lastUpdate">--:--:--</span></span>
+        <div class="glass-card">
+            <div class="info-grid">
+                <div class="info-item">
+                    <i class="fas fa-clock"></i><br>
+                    Última atualização<br>
+                    <strong id="lastUpdate">--:--:--</strong>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-hourglass-end"></i><br>
+                    Previsão válida até<br>
+                    <strong id="predictionTime">--:--</strong>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-database"></i><br>
+                    Dados analisados<br>
+                    <strong id="dataCount">0</strong>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-sync-alt"></i><br>
+                    Atualizações<br>
+                    <strong id="updateCount">0</strong>
+                </div>
+            </div>
         </div>
 
-        <div class="text-muted" style="font-size: 0.8rem;">
-            <i class="fas fa-info-circle"></i> Análise em tempo real baseada em tendências de mercado
+        <!-- Botão de Atualização -->
+        <button class="btn-premium w-100 pulse" onclick="loadData()">
+            <i class="fas fa-bolt"></i> ATUALIZAR AGORA
+        </button>
+
+        <!-- Footer -->
+        <div class="text-center mt-4">
+            <small class="text-muted">
+                <i class="fas fa-shield-alt"></i> Sistema de análise em tempo real
+            </small>
         </div>
     </div>
 
@@ -158,74 +230,62 @@
         function updateDisplay(data) {
             // Atualizar direção
             const directionDiv = document.getElementById('directionDisplay');
-            const confidenceDiv = document.getElementById('confidenceDisplay');
-            const trendStrengthDiv = document.getElementById('trendStrength');
+            const confidenceCircle = document.getElementById('confidenceCircle');
+            const confidenceValue = document.getElementById('confidenceValue');
+            const trendBadge = document.getElementById('trendBadge');
             
-            confidenceDiv.textContent = data.confidence + '%';
+            confidenceValue.textContent = data.confidence + '%';
             
             let directionClass = 'direction-loading';
-            let glowClass = '';
+            let confidenceClass = 'confidence-up';
             
             if (data.direction.includes('SUBINDO')) {
                 directionClass = 'direction-up';
-                glowClass = 'glow-up';
+                confidenceClass = 'confidence-up';
             } else if (data.direction.includes('DESCENDO')) {
                 directionClass = 'direction-down';
-                glowClass = 'glow-down';
-            } else if (data.direction.includes('ESTÁVEL') || data.direction.includes('INDECISO')) {
+                confidenceClass = 'confidence-down';
+            } else if (data.direction.includes('ESTÁVEL')) {
                 directionClass = 'direction-neutral';
-                glowClass = 'glow-neutral';
+                confidenceClass = 'confidence-neutral';
             }
             
-            directionDiv.innerHTML = `
-                <div class="direction-display ${directionClass} ${glowClass} pulse">
-                    ${data.direction}
-                </div>
-            `;
+            directionDiv.innerHTML = data.direction;
+            directionDiv.className = `direction-display ${directionClass} pulse glow`;
+            confidenceCircle.className = `confidence-circle ${confidenceClass} pulse`;
             
             // Atualizar outras informações
-            trendStrengthDiv.innerHTML = `<i class="fas fa-wave-square"></i> FORÇA: ${data.trend_strength}`;
-            document.getElementById('predictionTime').textContent = data.prediction_time;
+            trendBadge.innerHTML = `<i class="fas fa-wave-square"></i> FORÇA: ${data.trend_strength}`;
             document.getElementById('lastUpdate').textContent = data.last_update;
-            document.getElementById('dataPoints').textContent = data.history_count;
-            
-            // Cor da confiança baseada na direção
-            if (data.direction.includes('SUBINDO')) {
-                confidenceDiv.className = 'confidence-display direction-up';
-            } else if (data.direction.includes('DESCENDO')) {
-                confidenceDiv.className = 'confidence-display direction-down';
-            } else {
-                confidenceDiv.className = 'confidence-display direction-neutral';
+            document.getElementById('predictionTime').textContent = data.prediction_time;
+            document.getElementById('dataCount').textContent = data.history_size;
+            document.getElementById('updateCount').textContent = data.update_count;
+        }
+
+        async function loadData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateDisplay(data);
+                }
+            } catch (error) {
+                console.log('Sistema carregando...');
             }
         }
 
-        function loadData() {
-            fetch('/api/status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        updateDisplay(data);
-                    }
-                })
-                .catch(error => {
-                    console.log('Aguardando dados...');
-                });
-        }
-
-        // Atualizar a cada 3 segundos
+        // Carregar dados a cada 3 segundos
         loadData();
         setInterval(loadData, 3000);
 
-        // Verificar saúde do sistema
+        // Efeito de loading inicial
         setInterval(() => {
-            fetch('/api/health')
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.has_data) {
-                        console.log('Sistema iniciando...');
-                    }
-                });
-        }, 10000);
+            const confidence = document.getElementById('confidenceValue');
+            if (confidence.textContent === '50%') {
+                confidence.classList.toggle('pulse');
+            }
+        }, 1000);
     </script>
 </body>
 </html>
