@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bitcoin Predictor - Previsão 90min</title>
+    <title>Bitcoin Predictor Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -11,6 +11,7 @@
             --color-up: #00C853;
             --color-down: #FF1744;
             --color-neutral: #2962FF;
+            --color-loading: #FF9800;
             --bg-dark: #0a0e17;
             --card-bg: #1a2238;
         }
@@ -20,130 +21,184 @@
             color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
         }
         
         .container {
             max-width: 500px;
-            margin: 0 auto;
+            text-align: center;
         }
         
         .status-card {
             background: var(--card-bg);
             border-radius: 20px;
-            padding: 30px;
+            padding: 40px 30px;
             margin: 20px 0;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
         }
         
-        .price {
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+        }
+        
+        .direction-display {
             font-size: 3.5rem;
             font-weight: bold;
+            margin: 20px 0;
+            min-height: 80px;
+        }
+        
+        .direction-up { color: var(--color-up); }
+        .direction-down { color: var(--color-down); }
+        .direction-neutral { color: var(--color-neutral); }
+        .direction-loading { color: var(--color-loading); }
+        
+        .confidence-display {
+            font-size: 5rem;
+            font-weight: bold;
             margin: 10px 0;
+            text-shadow: 0 0 20px currentColor;
         }
         
-        .direction-up {
-            color: var(--color-up);
-            font-size: 2.5rem;
-            font-weight: bold;
-        }
-        
-        .direction-down {
-            color: var(--color-down);
-            font-size: 2.5rem;
-            font-weight: bold;
-        }
-        
-        .direction-neutral {
-            color: var(--color-neutral);
-            font-size: 2.5rem;
-            font-weight: bold;
-        }
-        
-        .confidence {
-            font-size: 1.2rem;
+        .trend-strength {
+            font-size: 1.4rem;
             margin: 15px 0;
-        }
-        
-        .progress {
-            height: 20px;
+            padding: 10px 20px;
+            border-radius: 25px;
             background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            margin: 15px 0;
-            overflow: hidden;
+            display: inline-block;
         }
         
-        .progress-bar {
-            transition: width 1s ease-in-out;
-        }
-        
-        .last-update {
+        .prediction-time {
+            font-size: 1.3rem;
+            margin: 20px 0;
             color: #8892b0;
-            font-size: 0.9rem;
-            margin-top: 20px;
         }
         
-        .loading {
+        .info-row {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            color: #a0aec0;
         }
         
         .pulse {
             animation: pulse 2s infinite;
         }
         
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
         }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .glow-up { text-shadow: 0 0 30px var(--color-up); }
+        .glow-down { text-shadow: 0 0 30px var(--color-down); }
+        .glow-neutral { text-shadow: 0 0 30px var(--color-neutral); }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="text-center mb-4">
-            <h1><i class="fas fa-bitcoin"></i> Bitcoin Predictor</h1>
-            <p class="text-muted">Previsão confiável para as próximas 90 minutos</p>
+        <!-- Header -->
+        <div class="mb-4 fade-in">
+            <h1><i class="fas fa-chart-line"></i> Bitcoin Predictor Pro</h1>
+            <p class="text-muted">Previsão para as próximas 90 minutos</p>
         </div>
 
-        <div class="status-card">
-            <h3><i class="fas fa-coins"></i> Preço Atual</h3>
-            <div class="price" id="currentPrice">$--.--</div>
-        </div>
-
-        <div class="status-card">
-            <h3><i class="fas fa-crystal-ball"></i> Previsão 90min</h3>
+        <!-- Card Principal -->
+        <div class="status-card fade-in">
             <div id="directionDisplay">
-                <div class="loading">
-                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                <div class="direction-display direction-loading">
+                    <i class="fas fa-spinner fa-spin"></i><br>
+                    ANALISANDO
                 </div>
             </div>
-            <div class="confidence">
-                Confiança: <span id="confidenceValue">--%</span>
+            
+            <div class="confidence-display" id="confidenceDisplay">
+                --
             </div>
-            <div class="progress">
-                <div id="confidenceBar" class="progress-bar" style="width: 0%"></div>
+            
+            <div class="trend-strength" id="trendStrength">
+                <i class="fas fa-wave-square"></i> COLETANDO DADOS
+            </div>
+            
+            <div class="prediction-time">
+                <i class="fas fa-clock"></i> Previsão válida até: <span id="predictionTime">--:--</span>
             </div>
         </div>
 
-        <div class="status-card">
-            <div class="last-update">
-                <i class="fas fa-sync-alt"></i> 
-                Última atualização: <span id="lastUpdate">--:--:--</span>
-                <br>
-                <span id="historyInfo">Analisando dados...</span>
-            </div>
-            <button class="btn btn-primary mt-3" onclick="loadData()">
-                <i class="fas fa-redo"></i> Atualizar Agora
-            </button>
+        <!-- Informações -->
+        <div class="info-row">
+            <span><i class="fas fa-database"></i> <span id="dataPoints">0</span> dados</span>
+            <span><i class="fas fa-sync-alt"></i> <span id="lastUpdate">--:--:--</span></span>
+        </div>
+
+        <div class="text-muted" style="font-size: 0.8rem;">
+            <i class="fas fa-info-circle"></i> Análise em tempo real baseada em tendências de mercado
         </div>
     </div>
 
     <script>
+        function updateDisplay(data) {
+            // Atualizar direção
+            const directionDiv = document.getElementById('directionDisplay');
+            const confidenceDiv = document.getElementById('confidenceDisplay');
+            const trendStrengthDiv = document.getElementById('trendStrength');
+            
+            confidenceDiv.textContent = data.confidence + '%';
+            
+            let directionClass = 'direction-loading';
+            let glowClass = '';
+            
+            if (data.direction.includes('SUBINDO')) {
+                directionClass = 'direction-up';
+                glowClass = 'glow-up';
+            } else if (data.direction.includes('DESCENDO')) {
+                directionClass = 'direction-down';
+                glowClass = 'glow-down';
+            } else if (data.direction.includes('ESTÁVEL') || data.direction.includes('INDECISO')) {
+                directionClass = 'direction-neutral';
+                glowClass = 'glow-neutral';
+            }
+            
+            directionDiv.innerHTML = `
+                <div class="direction-display ${directionClass} ${glowClass} pulse">
+                    ${data.direction}
+                </div>
+            `;
+            
+            // Atualizar outras informações
+            trendStrengthDiv.innerHTML = `<i class="fas fa-wave-square"></i> FORÇA: ${data.trend_strength}`;
+            document.getElementById('predictionTime').textContent = data.prediction_time;
+            document.getElementById('lastUpdate').textContent = data.last_update;
+            document.getElementById('dataPoints').textContent = data.history_count;
+            
+            // Cor da confiança baseada na direção
+            if (data.direction.includes('SUBINDO')) {
+                confidenceDiv.className = 'confidence-display direction-up';
+            } else if (data.direction.includes('DESCENDO')) {
+                confidenceDiv.className = 'confidence-display direction-down';
+            } else {
+                confidenceDiv.className = 'confidence-display direction-neutral';
+            }
+        }
+
         function loadData() {
             fetch('/api/status')
                 .then(response => response.json())
@@ -153,82 +208,24 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Erro:', error);
-                    showError();
+                    console.log('Aguardando dados...');
                 });
         }
 
-        function updateDisplay(data) {
-            // Preço atual
-            document.getElementById('currentPrice').textContent = 
-                '$' + data.current_price.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-
-            // Direção e confiança
-            const directionDiv = document.getElementById('directionDisplay');
-            const confidenceBar = document.getElementById('confidenceBar');
-            const confidenceValue = document.getElementById('confidenceValue');
-            
-            confidenceBar.style.width = data.confidence + '%';
-            confidenceValue.textContent = data.confidence + '%';
-
-            let directionHtml = '';
-            if (data.direction === 'UP') {
-                directionHtml = `
-                    <div class="direction-up pulse">
-                        <i class="fas fa-arrow-up"></i> SUBINDO
-                    </div>
-                    <p>Previsão: $${data.prediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                `;
-                confidenceBar.className = 'progress-bar bg-success';
-            } 
-            else if (data.direction === 'DOWN') {
-                directionHtml = `
-                    <div class="direction-down pulse">
-                        <i class="fas fa-arrow-down"></i> DESCENDO
-                    </div>
-                    <p>Previsão: $${data.prediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                `;
-                confidenceBar.className = 'progress-bar bg-danger';
-            }
-            else {
-                directionHtml = `
-                    <div class="direction-neutral">
-                        <i class="fas fa-pause"></i> ESTÁVEL
-                    </div>
-                    <p>Previsão: $${data.prediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                `;
-                confidenceBar.className = 'progress-bar bg-primary';
-            }
-
-            directionDiv.innerHTML = directionHtml;
-
-            // Informações
-            document.getElementById('lastUpdate').textContent = data.last_update;
-            document.getElementById('historyInfo').textContent = 
-                `${data.history_count} dados analisados`;
-        }
-
-        function showError() {
-            document.getElementById('directionDisplay').innerHTML = `
-                <div class="direction-neutral">
-                    <i class="fas fa-exclamation-triangle"></i> OFFLINE
-                </div>
-                <p>Reconectando...</p>
-            `;
-        }
-
-        // Carregar dados inicialmente e a cada 10 segundos
+        // Atualizar a cada 3 segundos
         loadData();
-        setInterval(loadData, 10000);
+        setInterval(loadData, 3000);
 
-        // Verificar saúde da API
+        // Verificar saúde do sistema
         setInterval(() => {
             fetch('/api/health')
-                .catch(() => showError());
-        }, 5000);
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.has_data) {
+                        console.log('Sistema iniciando...');
+                    }
+                });
+        }, 10000);
     </script>
 </body>
 </html>
