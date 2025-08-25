@@ -97,6 +97,11 @@
             padding: 12px 25px;
             width: 100%;
         }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -110,21 +115,21 @@
         <!-- Preço Atual -->
         <div class="glass-card text-center">
             <h5><i class="fas fa-coins"></i> PREÇO ATUAL</h5>
-            <div class="price-display" id="currentPrice">$50,000.00</div>
-            <div class="change-display" id="priceChange">+0.00%</div>
+            <div class="price-display" id="currentPrice">Carregando...</div>
+            <div class="change-display" id="priceChange">--</div>
         </div>
 
         <!-- Previsão -->
         <div class="glass-card text-center">
             <h5><i class="fas fa-crystal-ball"></i> PREVISÃO 90MIN</h5>
-            <div class="direction-display direction-up pulse" id="directionDisplay">
-                📈 SUBINDO
+            <div class="direction-display direction-neutral" id="directionDisplay">
+                ↻ CARREGANDO...
             </div>
-            <div class="confidence-display positive" id="confidenceDisplay">
-                75%
+            <div class="confidence-display" id="confidenceDisplay">
+                --
             </div>
             <div class="text-muted" id="trendStrength">
-                <i class="fas fa-wave-square"></i> FORÇA: MODERADA
+                <i class="fas fa-wave-square"></i> FORÇA: --
             </div>
         </div>
 
@@ -134,19 +139,19 @@
             <div class="indicator-grid">
                 <div class="indicator-item">
                     <small>RSI</small>
-                    <div class="positive" id="rsiValue">62.5</div>
+                    <div id="rsiValue">--</div>
                 </div>
                 <div class="indicator-item">
                     <small>MACD</small>
-                    <div class="positive" id="macdValue">125.8</div>
+                    <div id="macdValue">--</div>
                 </div>
                 <div class="indicator-item">
                     <small>Tendência</small>
-                    <div class="positive" id="trendScore">2</div>
+                    <div id="trendScore">--</div>
                 </div>
                 <div class="indicator-item">
                     <small>Pontuação</small>
-                    <div class="positive" id="totalScore">4</div>
+                    <div id="totalScore">--</div>
                 </div>
             </div>
         </div>
@@ -166,7 +171,7 @@
         </div>
 
         <!-- Botão -->
-        <button class="btn btn-primary pulse" onclick="loadData()">
+        <button class="btn btn-primary" onclick="loadData()" id="refreshButton">
             <i class="fas fa-sync-alt"></i> ATUALIZAR
         </button>
     </div>
@@ -199,21 +204,44 @@
             // Confiança
             const confidenceDiv = document.getElementById('confidenceDisplay');
             confidenceDiv.textContent = data.confidence + '%';
-            confidenceDiv.className = data.direction.includes('SUBINDO') ? 
-                'confidence-display positive' : 'confidence-display negative';
+            
+            if (data.direction.includes('SUBINDO')) {
+                confidenceDiv.className = 'confidence-display positive';
+            } else if (data.direction.includes('DESCENDO')) {
+                confidenceDiv.className = 'confidence-display negative';
+            } else {
+                confidenceDiv.className = 'confidence-display';
+            }
 
             // Outros dados
             document.getElementById('trendStrength').innerHTML = 
                 `<i class="fas fa-wave-square"></i> FORÇA: ${data.trend_strength}`;
+            
+            // Atualizar indicadores
             document.getElementById('rsiValue').textContent = data.analysis.rsi_value.toFixed(1);
+            document.getElementById('rsiValue').className = data.analysis.rsi_value > 70 ? 'negative' : 
+                                                          data.analysis.rsi_value < 30 ? 'positive' : '';
+            
             document.getElementById('macdValue').textContent = data.analysis.macd_value.toFixed(1);
+            document.getElementById('macdValue').className = data.analysis.macd_value > 0 ? 'positive' : 'negative';
+            
             document.getElementById('trendScore').textContent = data.analysis.trend_score;
+            document.getElementById('trendScore').className = data.analysis.trend_score > 0 ? 'positive' : 
+                                                            data.analysis.trend_score < 0 ? 'negative' : '';
+            
             document.getElementById('totalScore').textContent = data.analysis.total_score;
+            document.getElementById('totalScore').className = data.analysis.total_score > 0 ? 'positive' : 
+                                                            data.analysis.total_score < 0 ? 'negative' : '';
+            
             document.getElementById('lastUpdate').textContent = data.last_update;
             document.getElementById('predictionTime').textContent = data.prediction_time;
         }
 
         async function loadData() {
+            const button = document.getElementById('refreshButton');
+            button.classList.add('loading');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ATUALIZANDO...';
+            
             try {
                 const response = await fetch('/api/market-data');
                 const data = await response.json();
@@ -222,13 +250,16 @@
                     updateDisplay(data);
                 }
             } catch (error) {
-                console.log('Atualizando...');
+                console.error('Erro ao carregar dados:', error);
+            } finally {
+                button.classList.remove('loading');
+                button.innerHTML = '<i class="fas fa-sync-alt"></i> ATUALIZAR';
             }
         }
 
-        // Carregar dados imediatamente e a cada 5 segundos
+        // Carregar dados imediatamente e a cada 15 segundos
         loadData();
-        setInterval(loadData, 5000);
+        setInterval(loadData, 15000);
     </script>
 </body>
 </html>
